@@ -48,7 +48,7 @@ void multiply_blocked(const Matrix<T>& A, const Matrix<T>& B, Matrix<T>& C, int 
 }
 
 int main() {
-    const int N = 1 << 10; // 1024
+    const int N = 1 << 12; // 1024
     const int BLOCK_SIZE = 512;   // blocos grandes (nível de cache L2)
     const int SUB_BLOCK_SIZE = 256; // sub-blocos menores (nível de cache L1)
 
