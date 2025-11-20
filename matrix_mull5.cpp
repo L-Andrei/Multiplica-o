@@ -33,8 +33,11 @@ void set_real_time_priority() {
 // Multiplicação de matrizes bloqueada com AVX2
 //------------------------------------------------------------------------------
 template<typename T>
-void multiply_blocked(Matrix<T>& A, Matrix<T>& B, Matrix<T>& C,
-                      int blockSize, int subBlockSize) {
+void multiply_blocked(Matrix<T>& A, Matrix<T>& B, Matrix<T>& C) {
+
+    int blockSize = computeBlockSize(A,2);
+    int subBlockSize = computeBlockSize(A,1);
+
     const int n = A.rows();
     const int m = B.cols();
     const int p = A.cols();
@@ -82,19 +85,16 @@ void multiply_blocked(Matrix<T>& A, Matrix<T>& B, Matrix<T>& C,
             }
         }
     }
-
     auto end = std::chrono::high_resolution_clock::now();
-    auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
-    std::cout << "Tempo total: " << ns << " ns\n";
+    std::chrono::duration<double> elapsed = end - start;
+    std::cout << "Tempo total: " << elapsed.count() << " s\n";
 }
 
 //------------------------------------------------------------------------------
 int main() {
     set_real_time_priority();
 
-    const int N = 1 << 12;          // 1024
-    const int BLOCK_SIZE = 512;
-    const int SUB_BLOCK_SIZE = 256;
+    const int N = 1 << 10;          // 1024
 
     Matrix<double> A(N, N, 0.0);
     Matrix<double> B(N, N, 0.0);
@@ -110,6 +110,8 @@ int main() {
             B(i, j) = dist(rng);
         }
 
-    multiply_blocked(A, B, C, BLOCK_SIZE, SUB_BLOCK_SIZE);
+    multiply_blocked(A, B, C);
     return 0;
 }
+// Código de compilação:
+// g++ -mfma -mavx2 matrix_mull5.cpp -o matrix5
