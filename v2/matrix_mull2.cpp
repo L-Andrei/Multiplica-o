@@ -35,9 +35,8 @@ void multiply(const Matrix<T>& A, const Matrix<T>& B, Matrix<T>& C) {
 
     for (int i = 0; i < n; i++) {
         for (int k = 0; k < m; k++) {
-            T a_ik=A(i, k);
             for (int j = 0; j < p; j++) {
-                C(i,j) += a_ik * B(k, j);
+                C(i,j) += A(i,k) * B(k, j);
             }
         }
     }
