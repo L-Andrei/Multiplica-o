@@ -1,1 +1,13 @@
 Resultados das medições de tempos do método em matrix_mull5.cpp
+Rodando em tempo real (SCHED_FIFO, prioridade 99)
+Memória travada (sem paginação)
+Tempo total: 2.49452 s
+Rodando em tempo real (SCHED_FIFO, prioridade 99)
+Memória travada (sem paginação)
+Tempo total: 2.53475 s
+Rodando em tempo real (SCHED_FIFO, prioridade 99)
+Memória travada (sem paginação)
+Tempo total: 2.59999 s
+Rodando em tempo real (SCHED_FIFO, prioridade 99)
+Memória travada (sem paginação)
+Tempo total: 2.5177 s

@@ -1,2 +1,14 @@
 Resultados do código matrix_mull6.cpp
 
+Rodando em tempo real (SCHED_FIFO, prioridade 99)
+Memória travada (sem paginação)
+Tempo total: 4.28925 s
+Rodando em tempo real (SCHED_FIFO, prioridade 99)
+Memória travada (sem paginação)
+Tempo total: 4.34354 s
+Rodando em tempo real (SCHED_FIFO, prioridade 99)
+Memória travada (sem paginação)
+Tempo total: 4.44692 s
+Rodando em tempo real (SCHED_FIFO, prioridade 99)
+Memória travada (sem paginação)
+Tempo total: 4.15512 s
