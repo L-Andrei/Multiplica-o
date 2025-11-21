@@ -29,38 +29,40 @@ void set_real_time_priority() {
 template<typename T>
 void multiply_blocked(const Matrix<T>& A, const Matrix<T>& B, Matrix<T>& C) {
 
-    int blockSize = computeBlockSize(2);
-    const int n = A.rows();
-    const int m = B.cols();
-    const int p = A.cols();
+    size_t blockSize = computeBlockSize(A, 2);
+    const size_t n = A.rows();
+    const size_t m = B.cols();
+    const size_t p = A.cols();
 
     // Começa a contagem do tempo
     auto start = std::chrono::high_resolution_clock::now();
 
-    for (int ii = 0; ii < n; ii += blockSize) {
-        for (int jj = 0; jj < m; jj += blockSize) {
-            for (int kk = 0; kk < p; kk += blockSize) {
+    for (size_t ii = 0; ii < n; ii += blockSize) {
+        for (size_t jj = 0; jj < m; jj += blockSize) {
+            for (size_t kk = 0; kk < p; kk += blockSize) {
 
                 // Limites reais do bloco (para bordas)
-                int i_max = std::min(ii + blockSize, n);
-                int j_max = std::min(jj + blockSize, m);
-                int k_max = std::min(kk + blockSize, p);
+                size_t i_max = std::min(ii + blockSize, n);
+                size_t j_max = std::min(jj + blockSize, m);
+                size_t k_max = std::min(kk + blockSize, p);
 
-                for (int i = ii; i < i_max; i++) {
-                    for (int k = kk; k < k_max; k++) {
-                        for (int j = jj; j < j_max; j++) {
-                            C(i,j) += A(i,k) * B(k, j);
+                for (size_t i = ii; i < i_max; i++) {
+                    for (size_t k = kk; k < k_max; k++) {
+                        for (size_t j = jj; j < j_max; j++) {
+                            C(i, j) += A(i, k) * B(k, j);
                         }
                     }
                 }
             }
         }
     }
+
     // Termina a contagem do tempo
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = end - start;
     std::cout << "Tempo total: " << elapsed.count() << " s\n";
 }
+
 
 int main() {
 
