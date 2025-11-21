@@ -105,8 +105,8 @@ void multiply_blocked_avx2(Matrix<T>& A, Matrix<T>& B, Matrix<T>& C) {
     }
 
     auto end = high_resolution_clock::now();
-    duration<double> elapsed = end - start;
-    std::cout << "Tempo total (AVX2 intrínsecos): " << elapsed.count() << " s\n";
+    auto ms = duration_cast<milliseconds>(end - start).count();
+    std::cout << "Tempo total (AVX2 intrínsecos): " << ms << " ms\n";
 }
 
 int main() {
