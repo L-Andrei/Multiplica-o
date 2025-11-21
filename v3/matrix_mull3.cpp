@@ -58,6 +58,10 @@ void multiply_blocked(const Matrix<T>& A, const Matrix<T>& B, Matrix<T>& C) {
             }
         }
     }
+    // Termina a contagem do tempo
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed = end - start;
+    std::cout << "Tempo total: " << elapsed.count() << " s\n";
 }
 
 int main() {
