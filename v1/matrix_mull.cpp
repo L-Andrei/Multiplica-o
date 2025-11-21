@@ -30,7 +30,8 @@ void multiply(const Matrix<T>& A, const Matrix<T>& B, Matrix<T>& C) {
     const int m = B.cols();
     const int p = A.cols();
 
-    auto start = std::chrono::high_resolution_clock::now();
+    // Começa a contagem do tempo
+    auto start = std::chrono::high_resolution_clock::now(); 
 
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < m; j++) {
@@ -41,6 +42,8 @@ void multiply(const Matrix<T>& A, const Matrix<T>& B, Matrix<T>& C) {
             C(i, j) = sum;
         }
     }
+
+    // Termina a contagem do tempo
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = end - start;
     std::cout << "Tempo total: " << elapsed.count() << " s\n";
