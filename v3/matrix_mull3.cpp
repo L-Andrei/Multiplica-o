@@ -3,15 +3,39 @@
 #include <random>
 #include <iostream>
 #include <algorithm>
+#include <chrono>
+#include <sched.h>
+#include <sys/mman.h>
+#include <unistd.h>
 
 using namespace ifnum::linearAlgebra;
 
-// Multiplicação de matrizes com blocagem
+void set_real_time_priority() {
+    struct sched_param param;
+    param.sched_priority = 99; // máxima prioridade possível
+
+    if (sched_setscheduler(0, SCHED_FIFO, &param) == -1)
+        perror("Erro ao definir SCHED_FIFO");
+    else
+        std::cout << "Rodando em tempo real (SCHED_FIFO, prioridade 99)\n";
+
+    if (mlockall(MCL_CURRENT | MCL_FUTURE) == -1)
+        perror("Erro ao travar memória (mlockall)");
+    else
+        std::cout << "Memória travada (sem paginação)\n";
+}
+
+
 template<typename T>
-void multiply_blocked(const Matrix<T>& A, const Matrix<T>& B, Matrix<T>& C, int blockSize) {
+void multiply_blocked(const Matrix<T>& A, const Matrix<T>& B, Matrix<T>& C) {
+
+    int blockSize = computeBlockSize(2);
     const int n = A.rows();
     const int m = B.cols();
     const int p = A.cols();
+
+    // Começa a contagem do tempo
+    auto start = std::chrono::high_resolution_clock::now();
 
     for (int ii = 0; ii < n; ii += blockSize) {
         for (int jj = 0; jj < m; jj += blockSize) {
@@ -23,11 +47,12 @@ void multiply_blocked(const Matrix<T>& A, const Matrix<T>& B, Matrix<T>& C, int 
                 int k_max = std::min(kk + blockSize, p);
 
                 for (int i = ii; i < i_max; i++) {
-                    for (int k = kk; k < k_max; k++) {
-                        T a_ik = A(i, k);
-                        for (int j = jj; j < j_max; j++) {
-                            C(i, j) += a_ik * B(k, j);
+                    for (int j = jj; j < j_max; j++) {
+                        T sum = 0;
+                        for (int k = kk; k < k_max; k++) {
+                            sum += A(i,k) * B(k, j);
                         }
+                        C(i,j) = sum;
                     }
                 }
             }
@@ -36,8 +61,10 @@ void multiply_blocked(const Matrix<T>& A, const Matrix<T>& B, Matrix<T>& C, int 
 }
 
 int main() {
+
+    set_real_time_priority();
+
     const int N = 1 << 10; 
-    const int BLOCK_SIZE = 256; 
 
     Matrix<double> A(N, N, 0.0);
     Matrix<double> B(N, N, 0.0);
@@ -55,8 +82,7 @@ int main() {
     }
 
     // Multiplicação por blocos
-    multiply_blocked(A, B, C, BLOCK_SIZE);
+    multiply_blocked(A, B, C);
 
-    std::cout << "C(0,0) = " << C(0, 0) << '\n';
     return 0;
 }
