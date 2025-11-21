@@ -1,3 +1,5 @@
+Resultados do método contido em matrix_mull4.cpp
+
 Rodando em tempo real (SCHED_FIFO, prioridade 99)
 Memória travada (sem paginação)
 Tempo total: 5.89033 s

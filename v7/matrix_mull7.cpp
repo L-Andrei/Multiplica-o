@@ -114,4 +114,4 @@ int main() {
     return 0;
 }
 // Código de compilação:
-// g++ -mfma -mavx2 matrix_mull5.cpp -o matrix5
+// g++ -mfma -mavx2 matrix_mull.cpp -o matrix
