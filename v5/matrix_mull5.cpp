@@ -82,7 +82,7 @@ int main() {
 
     set_real_time_priority();
 
-    const int N = 1 << 12; // 1024
+    const int N = 1 << 10; // 1024
 
     Matrix<double> A(N, N, 0.0);
     Matrix<double> B(N, N, 0.0);
