@@ -86,3 +86,5 @@ int main() {
 
     return 0;
 }
+//Comando utilizado para a compilação:
+//g++ -O3 matrix_mull3.cpp -o matrix3
