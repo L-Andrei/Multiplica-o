@@ -1,1 +1,12 @@
-Aqui sera escrito os resultados das multiplicao do codigo matrix_mull2.cpp
+Aqui sera escrito os resultados das multiplicao do codigo matrix_mull2.cppRodando em tempo real (SCHED_FIFO, prioridade 99)
+Memória travada (sem paginação)
+Tempo total: 30.0739 s
+Rodando em tempo real (SCHED_FIFO, prioridade 99)
+Memória travada (sem paginação)
+Tempo total: 28.7034 s
+Rodando em tempo real (SCHED_FIFO, prioridade 99)
+Memória travada (sem paginação)
+Tempo total: 30.8246 s
+Rodando em tempo real (SCHED_FIFO, prioridade 99)
+Memória travada (sem paginação)
+Tempo total: 27.4386 s
