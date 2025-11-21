@@ -23,3 +23,6 @@ Tempo total (SIMD): 39740 ms
 Rodando em tempo real (SCHED_FIFO, prioridade 99)
 Memória travada (sem paginação)
 Tempo total (SIMD): 38541 ms
+Rodando em tempo real (SCHED_FIFO, prioridade 99)
+Memória travada (sem paginação)
+Tempo total (SIMD): 38573 ms

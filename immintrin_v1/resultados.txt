@@ -23,3 +23,6 @@ Tempo total (AVX2 intrínsecos): 40586 ms
 Rodando em tempo real (SCHED_FIFO, prioridade 99)
 Memória travada (sem paginação)
 Tempo total (AVX2 intrínsecos): 38118 ms
+Rodando em tempo real (SCHED_FIFO, prioridade 99)
+Memória travada (sem paginação)
+Tempo total (AVX2 intrínsecos): 36580 ms
