@@ -1,1 +1,12 @@
-Resultados do código matrix_mull3.cpp
+Resultados do código matrix_mull3.cppRodando em tempo real (SCHED_FIFO, prioridade 99)
+Memória travada (sem paginação)
+Tempo total: 3.43327 s
+Rodando em tempo real (SCHED_FIFO, prioridade 99)
+Memória travada (sem paginação)
+Tempo total: 3.35509 s
+Rodando em tempo real (SCHED_FIFO, prioridade 99)
+Memória travada (sem paginação)
+Tempo total: 3.6462 s
+Rodando em tempo real (SCHED_FIFO, prioridade 99)
+Memória travada (sem paginação)
+Tempo total: 3.46345 s
