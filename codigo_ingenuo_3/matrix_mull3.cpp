@@ -2,7 +2,6 @@
 #include <ifnum/linearAlgebra/indexGenerator.hpp>
 #include <random>
 #include <iostream>
-#include <algorithm>
 #include <chrono>
 #include <sched.h>
 #include <sys/mman.h>
@@ -25,35 +24,20 @@ void set_real_time_priority() {
         std::cout << "Memória travada (sem paginação)\n";
 }
 
-
 template<typename T>
-void multiply_blocked(const Matrix<T>& A, const Matrix<T>& B, Matrix<T>& C) {
-
-    size_t blockSize = computeBlockSize(A, 2);
-    const size_t n = A.rows();
-    const size_t m = B.cols();
-    const size_t p = A.cols();
+void multiply(const Matrix<T>& A, const Matrix<T>& B, Matrix<T>& C) {
+    const int n = A.rows();
+    const int m = B.cols();
+    const int p = A.cols();
 
     // Começa a contagem do tempo
-    auto start = std::chrono::high_resolution_clock::now();
+    auto start = std::chrono::high_resolution_clock::now(); 
 
-    for (size_t ii = 0; ii < n; ii += blockSize) {
-        for (size_t jj = 0; jj < m; jj += blockSize) {
-            for (size_t kk = 0; kk < p; kk += blockSize) {
-
-                // Limites reais do bloco (para bordas)
-                size_t i_max = std::min(ii + blockSize, n);
-                size_t j_max = std::min(jj + blockSize, m);
-                size_t k_max = std::min(kk + blockSize, p);
-
-                for (size_t i = ii; i < i_max; i++) {
-                    for (size_t k = kk; k < k_max; k++) {
-                        T sum = A(i,k);
-                        for (size_t j = jj; j < j_max; j++) {
-                            C(i, j) += sum * B(k, j);
-                        }
-                    }
-                }
+    for (int k = 0; k < n; k++) {
+        for (int i = 0; i < m; i++) {
+            T sum = A(i,k);
+            for (int j = 0; j < p; j++) {
+                C(i,j) += sum * B(k, j);
             }
         }
     }
@@ -64,16 +48,15 @@ void multiply_blocked(const Matrix<T>& A, const Matrix<T>& B, Matrix<T>& C) {
     std::cout << "Tempo total: " << elapsed.count() << " s\n";
 }
 
-
-int main() {
+int main(){
 
     set_real_time_priority();
 
-    const int N = 1 << 10; 
+    const int N = 1<<10;
 
     Matrix<double> A(N, N, 0.0);
     Matrix<double> B(N, N, 0.0);
-    Matrix<double> C(N, N, 0.0);
+    Matrix<double> C(N,N,0.0);
 
     std::mt19937 rng(42);
     std::uniform_real_distribution<double> dist(-1.0, 1.0);
@@ -86,10 +69,10 @@ int main() {
         }
     }
 
-    // Multiplicação por blocos
-    multiply_blocked(A, B, C);
+    // Multiplicação simples
+    multiply(A, B, C);
 
     return 0;
 }
 //Comando utilizado para a compilação:
-//g++ -O3 matrix_mull4.cpp -o matrix4
+//g++ -O3 matrix_mull2.cpp -o matrix2

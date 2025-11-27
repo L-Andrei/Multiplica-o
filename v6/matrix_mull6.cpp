@@ -58,9 +58,10 @@ void multiply_blocked(const Matrix<T>& A, const Matrix<T>& B, Matrix<T>& C) {
                             size_t k_sub_max = std::min(kkk + subBlockSize, k_max);
 
                             for (size_t i = iii; i < i_sub_max; i++) {
-                                for (size_t j = jjj; j < j_sub_max; j++) {
-                                    for (size_t k = kkk; k < k_sub_max; k++) {
-                                        C(i,j) += A(i, k) * B(k, j);
+                                for (size_t k = kkk; k < k_sub_max; k++) {
+                                    T sum = A(i, k);
+                                    for (size_t j = jjj; j < j_sub_max; j++) {
+                                        C(i,j) += sum * B(k, j);
                                     }
                                 }
                             }
