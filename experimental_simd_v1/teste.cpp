@@ -122,7 +122,7 @@ int main() {
 
     set_real_time_priority();
 
-    const size_t N = 1 << 12; 
+    const size_t N = 1 << 10; 
 
     Matrix<double> A(N, N, 0.0);
     Matrix<double> B(N, N, 0.0);
@@ -140,6 +140,7 @@ int main() {
 
     // Executa a multiplicação vetorizada
     multiply_blocked_simd(A, B, C);
+    printf("%lf",C(0,0));
 
     return 0;
 }

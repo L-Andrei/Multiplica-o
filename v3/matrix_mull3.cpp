@@ -89,6 +89,8 @@ int main() {
     // Multiplicação por blocos
     multiply_blocked(A, B, C);
 
+    printf("%.ld",C(0,0));
+
     return 0;
 }
 //Comando utilizado para a compilação:

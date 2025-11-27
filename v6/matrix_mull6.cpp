@@ -99,6 +99,7 @@ int main() {
     }
 
     multiply_blocked(A, B, C);
+    printf("%lf",C(0,0));
 
     return 0;
 }

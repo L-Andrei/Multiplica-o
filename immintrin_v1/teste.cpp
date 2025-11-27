@@ -113,7 +113,7 @@ int main() {
 
     set_real_time_priority();
 
-    const size_t N = 1 << 12;
+    const size_t N = 1 << 10;
 
     Matrix<double> A(N, N, 0.0);
     Matrix<double> B(N, N, 0.0);
@@ -130,6 +130,7 @@ int main() {
     }
 
     multiply_blocked_avx2(A, B, C);
+    printf("%.lf",C(0,0));
 
     return 0;
 }
