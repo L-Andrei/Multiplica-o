@@ -125,11 +125,8 @@ int main() {
 
     set_real_time_priority();
 
-    const size_t N = 4096;
+    const size_t N = 1024;
 
-    // Construtor padrão assumido (Rows, Cols, Val)
-    // Se precisar usar Grid2, ajuste aqui conforme sua necessidade,
-    // mas evite usar o construtor de cópia quebrado da lib.
     Matrix<double> A(N, N, 0.0);
     Matrix<double> B(N, N, 0.0);
     Matrix<double> C(N, N, 0.0);

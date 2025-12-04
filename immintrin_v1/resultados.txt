@@ -2,10 +2,7 @@ Resultados dos teste com immintrin:
 
 
 Tempo total (AVX2 intrínsecos): 697 ms
-C(0,0): -1.44492
 Tempo total (AVX2 intrínsecos): 682 ms
-C(0,0): -1.44492
 Tempo total (AVX2 intrínsecos): 689 ms
-C(0,0): -1.44492
 Tempo total (AVX2 intrínsecos): 667 ms
-C(0,0): -1.44492
+
