@@ -18,83 +18,95 @@ void set_real_time_priority() {
     param.sched_priority = 99;
 
     if (sched_setscheduler(0, SCHED_FIFO, &param) == -1)
-        perror("Erro ao definir SCHED_FIFO");
+        // perror("Erro ao definir SCHED_FIFO"); // Comentado para não poluir se falhar
+        ;
     else
         std::cout << "Rodando em tempo real (SCHED_FIFO, prioridade 99)\n";
 
     if (mlockall(MCL_CURRENT | MCL_FUTURE) == -1)
-        perror("Erro ao travar memória (mlockall)");
-    else
-        std::cout << "Memória travada (sem paginação)\n";
+        // perror("Erro ao travar memória (mlockall)");
+        ;
 }
 
-// Implementação AVX2 manual com intrínsecos
-// Cada registrador __m256d contém 4 doubles
-
+// Multiplicação otimizada para Column-Major (ifnum) usando AVX2 Hand-Written
 template<typename T>
 void multiply_blocked_avx2(Matrix<T>& A, Matrix<T>& B, Matrix<T>& C) {
 
-    const size_t blockSize = computeBlockSize(A, 2);
-    const size_t subBlockSize = computeBlockSize(A, 1);
+    // Nível 2 = Cache L2/L3 (Macro Block)
+    const size_t blockSize = computeBlockSize(A, 2); 
+    // Nível 1 = Cache L1 (Micro Block/Register Block)
+    const size_t subBlockSize = computeBlockSize(A, 1); 
 
     const size_t n = A.rows();
     const size_t m = B.cols();
     const size_t p = A.cols();
 
-    // Criamos Bt para acesso contíguo a colunas de B
-    std::vector<T> Bt(m * p);
-    for (size_t k = 0; k < p; ++k) {
-        for (size_t j = 0; j < m; ++j) {
-            Bt[j * p + k] = B(k, j);
-        }
-    }
-
-    constexpr size_t V = 4; // AVX2 = 4 doubles por registrador
+    // Constante para AVX2 (256 bits / 64 bits por double = 4 doubles)
+    constexpr size_t V = 4; 
 
     auto start = high_resolution_clock::now();
 
-    for (size_t ii = 0; ii < n; ii += blockSize) {
-        for (size_t jj = 0; jj < m; jj += blockSize) {
-            for (size_t kk = 0; kk < p; kk += blockSize) {
+    // 1. Loop de Macro-Blocagem (Cache Blocking) - Ordem JJ, KK, II
+    for (size_t jj = 0; jj < m; jj += blockSize) {
+        for (size_t kk = 0; kk < p; kk += blockSize) {
+            for (size_t ii = 0; ii < n; ii += blockSize) {
 
                 size_t i_max = std::min(ii + blockSize, n);
                 size_t j_max = std::min(jj + blockSize, m);
                 size_t k_max = std::min(kk + blockSize, p);
 
-                for (size_t iii = ii; iii < i_max; iii += subBlockSize) {
-                    for (size_t jjj = jj; jjj < j_max; jjj += subBlockSize) {
-                        for (size_t kkk = kk; kkk < k_max; kkk += subBlockSize) {
+                // 2. Loop de Sub-Blocagem (Micro-kernel) - Ordem jjj, kkk, iii
+                for (size_t jjj = jj; jjj < j_max; jjj += subBlockSize) {
+                    for (size_t kkk = kk; kkk < k_max; kkk += subBlockSize) {
+                        for (size_t iii = ii; iii < i_max; iii += subBlockSize) {
 
                             size_t i_sub_max = std::min(iii + subBlockSize, i_max);
                             size_t j_sub_max = std::min(jjj + subBlockSize, j_max);
                             size_t k_sub_max = std::min(kkk + subBlockSize, k_max);
 
-                            for (size_t i = iii; i < i_sub_max; ++i) {
+                            // 3. Kernel AVX2 (Column-Major)
+                            // Estratégia: Fixa coluna J, carrega bloco vertical de C em registradores,
+                            // itera K acumulando (A_col * B_scalar) e salva de volta.
+                            
+                            for (size_t j = jjj; j < j_sub_max; ++j) {
+                                
+                                size_t i = iii;
 
-                                for (size_t j = jjj; j < j_sub_max; ++j) {
+                                // Parte Vetorizada (Passo 4 doubles)
+                                for (; i + V <= i_sub_max; i += V) {
+                                    
+                                    // Ponteiro para a posição C(i, j). Como é Col-Major, 
+                                    // os próximos 3 doubles estão em C(i+1, j), C(i+2, j)... (contíguos)
+                                    T* c_ptr = &C(i, j);
 
-                                    const T* a_ptr = &A(i, kkk);
-                                    const T* b_ptr = &Bt[j * p + kkk];
+                                    // Carrega o valor atual de C nos registradores (Accumulator)
+                                    __m256d acc_vec = _mm256_loadu_pd(c_ptr);
 
-                                    __m256d acc_vec = _mm256_setzero_pd();
-                                    size_t k = kkk;
+                                    // Loop K (Produto Interno Otimizado)
+                                    for (size_t k = kkk; k < k_sub_max; ++k) {
+                                        
+                                        // A(i, k) é contíguo verticalmente -> Load Vetorial
+                                        __m256d a_vec = _mm256_loadu_pd(&A(i, k));
+                                        
+                                        // B(k, j) é escalar para toda a coluna 'i' -> Broadcast
+                                        // Replica o valor B(k, j) para as 4 posições do vetor
+                                        __m256d b_vec = _mm256_set1_pd(B(k, j));
 
-                                    for (; k + V <= k_sub_max; k += V) {
-                                        __m256d va = _mm256_loadu_pd(a_ptr + (k - kkk));
-                                        __m256d vb = _mm256_loadu_pd(b_ptr + (k - kkk));
-                                        acc_vec = _mm256_fmadd_pd(va, vb, acc_vec);
+                                        // FMA: acc = (a * b) + acc
+                                        acc_vec = _mm256_fmadd_pd(a_vec, b_vec, acc_vec);
                                     }
 
-                                    // Redução horizontal do vetor
-                                    double tmp[4];
-                                    _mm256_storeu_pd(tmp, acc_vec);
-                                    double sum = tmp[0] + tmp[1] + tmp[2] + tmp[3];
+                                    // Salva o resultado acumulado de volta na memória
+                                    _mm256_storeu_pd(c_ptr, acc_vec);
+                                }
 
-                                    for (; k < k_sub_max; ++k) {
+                                // Parte Escalar (Cleanup para linhas que não formam múltiplo de 4)
+                                for (; i < i_sub_max; ++i) {
+                                    double sum = C(i, j);
+                                    for (size_t k = kkk; k < k_sub_max; ++k) {
                                         sum += A(i, k) * B(k, j);
                                     }
-
-                                    C(i, j) += sum;
+                                    C(i, j) = sum;
                                 }
                             }
                         }
@@ -113,8 +125,11 @@ int main() {
 
     set_real_time_priority();
 
-    const size_t N = 1 << 10;
+    const size_t N = 4096;
 
+    // Construtor padrão assumido (Rows, Cols, Val)
+    // Se precisar usar Grid2, ajuste aqui conforme sua necessidade,
+    // mas evite usar o construtor de cópia quebrado da lib.
     Matrix<double> A(N, N, 0.0);
     Matrix<double> B(N, N, 0.0);
     Matrix<double> C(N, N, 0.0);
@@ -122,6 +137,7 @@ int main() {
     std::mt19937 rng(42);
     std::uniform_real_distribution<double> dist(-1.0, 1.0);
 
+    // Inicialização
     for (size_t i = 0; i < N; ++i) {
         for (size_t j = 0; j < N; ++j) {
             A(i, j) = dist(rng);
@@ -130,8 +146,11 @@ int main() {
     }
 
     multiply_blocked_avx2(A, B, C);
-    printf("%.lf",C(0,0));
+    
+    // Verificação visual rápida (evita otimização total do compilador)
+    printf("C(0,0): %.5lf\n", C(0,0));
 
     return 0;
 }
-//g++ -O3 -mavx2 -mfma teste.cpp -o teste
+// Comando de compilação sugerido:
+// g++ -O3 -mavx2 -mfma teste.cpp -o teste

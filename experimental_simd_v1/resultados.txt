@@ -1,28 +1,23 @@
 Resultados dos teste com experimental simd:
 
-Rodando em tempo real (SCHED_FIFO, prioridade 99)
-Memória travada (sem paginação)
-Tempo total (SIMD): 492 ms
-Rodando em tempo real (SCHED_FIFO, prioridade 99)
-Memória travada (sem paginação)
-Tempo total (SIMD): 506 ms
-Rodando em tempo real (SCHED_FIFO, prioridade 99)
-Memória travada (sem paginação)
-Tempo total (SIMD): 501 ms
-Rodando em tempo real (SCHED_FIFO, prioridade 99)
-Memória travada (sem paginação)
-Tempo total (SIMD): 500 ms
 
-Aumento das dimensões para 4096:
-Rodando em tempo real (SCHED_FIFO, prioridade 99)
-Memória travada (sem paginação)
-Tempo total (SIMD): 38395 ms
-Rodando em tempo real (SCHED_FIFO, prioridade 99)
-Memória travada (sem paginação)
-Tempo total (SIMD): 39740 ms
-Rodando em tempo real (SCHED_FIFO, prioridade 99)
-Memória travada (sem paginação)
-Tempo total (SIMD): 38541 ms
-Rodando em tempo real (SCHED_FIFO, prioridade 99)
-Memória travada (sem paginação)
-Tempo total (SIMD): 38573 ms
+Alocando matrizes...
+Iniciando multiplicacao...
+Tempo total (SIMD Blocked Col-Major): 949 ms
+Verificando amostra...
+Resultado: SUCESSO
+Check: -1.44492
+Alocando matrizes...
+Iniciando multiplicacao...
+Tempo total (SIMD Blocked Col-Major): 956 ms
+Verificando amostra...
+Resultado: SUCESSO
+Check: -1.44492
+Alocando matrizes...
+Iniciando multiplicacao...
+Tempo total (SIMD Blocked Col-Major): 924 ms
+Verificando amostra...
+Resultado: SUCESSO
+Check: -1.44492
+
+testando para 4096

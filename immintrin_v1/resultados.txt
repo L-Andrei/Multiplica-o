@@ -1,28 +1,11 @@
 Resultados dos teste com immintrin:
 
-Rodando em tempo real (SCHED_FIFO, prioridade 99)
-Memória travada (sem paginação)
-Tempo total (AVX2 intrínsecos): 499 ms
-Rodando em tempo real (SCHED_FIFO, prioridade 99)
-Memória travada (sem paginação)
-Tempo total (AVX2 intrínsecos): 503 ms
-Rodando em tempo real (SCHED_FIFO, prioridade 99)
-Memória travada (sem paginação)
-Tempo total (AVX2 intrínsecos): 519 ms
-Rodando em tempo real (SCHED_FIFO, prioridade 99)
-Memória travada (sem paginação)
-Tempo total (AVX2 intrínsecos): 508 ms
 
-Aumento das dimensões para 4096:
-Rodando em tempo real (SCHED_FIFO, prioridade 99)
-Memória travada (sem paginação)
-Tempo total (AVX2 intrínsecos): 39412 ms
-Rodando em tempo real (SCHED_FIFO, prioridade 99)
-Memória travada (sem paginação)
-Tempo total (AVX2 intrínsecos): 40586 ms
-Rodando em tempo real (SCHED_FIFO, prioridade 99)
-Memória travada (sem paginação)
-Tempo total (AVX2 intrínsecos): 38118 ms
-Rodando em tempo real (SCHED_FIFO, prioridade 99)
-Memória travada (sem paginação)
-Tempo total (AVX2 intrínsecos): 36580 ms
+Tempo total (AVX2 intrínsecos): 697 ms
+C(0,0): -1.44492
+Tempo total (AVX2 intrínsecos): 682 ms
+C(0,0): -1.44492
+Tempo total (AVX2 intrínsecos): 689 ms
+C(0,0): -1.44492
+Tempo total (AVX2 intrínsecos): 667 ms
+C(0,0): -1.44492

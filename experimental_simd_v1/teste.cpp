@@ -1,5 +1,5 @@
 #include <ifnum/linearAlgebra/matrix.hpp>
-#include <ifnum/linearAlgebra/indexGenerator.hpp>
+#include <ifnum/linearAlgebra/indexGenerator.hpp> 
 #include <random>
 #include <iostream>
 #include <algorithm>
@@ -10,120 +10,136 @@
 #include <vector>
 #include <experimental/simd>
 
+// Namespaces
 using namespace ifnum::linearAlgebra;
-using namespace std::chrono;
 namespace simd = std::experimental;
 
+// --- Configurações de Sistema (Prioridade Real-Time) ---
 void set_real_time_priority() {
     struct sched_param param;
-    param.sched_priority = 99; // máxima prioridade possível
-
-    if (sched_setscheduler(0, SCHED_FIFO, &param) == -1)
-        perror("Erro ao definir SCHED_FIFO");
-    else
-        std::cout << "Rodando em tempo real (SCHED_FIFO, prioridade 99)\n";
-
-    if (mlockall(MCL_CURRENT | MCL_FUTURE) == -1)
-        perror("Erro ao travar memória (mlockall)");
-    else
-        std::cout << "Memória travada (sem paginação)\n";
+    param.sched_priority = 99;
+    // Ignora erros silenciosamente se não tiver sudo
+    sched_setscheduler(0, SCHED_FIFO, &param);
+    mlockall(MCL_CURRENT | MCL_FUTURE);
 }
 
-// Multiplicação de matrizes com blocagem hierárquica e vetorizações usando
-// std::experimental::simd (especificado para largura AVX2: 4 doubles por reg)
+// --- Multiplicação Otimizada para Column-Major (Sua Lib) ---
 template<typename T>
-void multiply_blocked_simd(Matrix<T>& A, Matrix<T>& B, Matrix<T>& C) {
-
-    const size_t blockSize = computeBlockSize(A, 2);
-    const size_t subBlockSize = computeBlockSize(A, 1);
-
+void multiply_simd_col_major(Matrix<T>& A, Matrix<T>& B, Matrix<T>& C) {
+    
     const size_t n = A.rows();
     const size_t m = B.cols();
-    const size_t p = A.cols();
+    const size_t p = A.cols(); 
 
-    // Preparar uma versão transposta de B (Bt) para acesso contíguo a colunas de B
-    // Bt tem dimensões m x p, cada linha de Bt = uma coluna de B
-    std::vector<T> Bt(m * p);
-    for (size_t k = 0; k < p; ++k) {
-        for (size_t j = 0; j < m; ++j) {
-            Bt[j * p + k] = B(k, j);
-        }
-    }
+    // Nível 1: Macro-Bloco (Para Cache L2/L3) - ex: 256 ou 512
+    const size_t blockSize = computeBlockSize(A, 2); 
+    
+    // Nível 2: Sub-Bloco (Para Cache L1) - ex: 32 ou 64
+    // Assumindo que computeBlocksize(1) retorne o tamanho ideal para L1
+    // Se não tiver essa função, use fixo: const size_t subBlockSize = 64;
+    const size_t subBlockSize = computeBlockSize(A, 2); 
 
-    // Define o tipo SIMD: 4 doubles (256 bits) — adequado para AVX/AVX2
     using abi = simd::simd_abi::fixed_size<4>;
     using simd_t = simd::simd<T, abi>;
-    constexpr size_t V = simd_t::size(); // tipicamente 4 para double
+    constexpr size_t V = simd_t::size();
 
-    auto start = high_resolution_clock::now();
+    auto start = std::chrono::high_resolution_clock::now();
 
-    for (size_t ii = 0; ii < n; ii += blockSize) {
-        for (size_t jj = 0; jj < m; jj += blockSize) {
-            for (size_t kk = 0; kk < p; kk += blockSize) {
+    // --- LOOP NÍVEL 1: Macro-Blocagem (Cache Blocking) ---
+    for (size_t jj = 0; jj < m; jj += blockSize) {
+        for (size_t kk = 0; kk < p; kk += blockSize) {
+            for (size_t ii = 0; ii < n; ii += blockSize) {
 
+                // Limites do Macro-Bloco
                 size_t i_max = std::min(ii + blockSize, n);
                 size_t j_max = std::min(jj + blockSize, m);
                 size_t k_max = std::min(kk + blockSize, p);
 
-                // Sub-blocos
-                for (size_t iii = ii; iii < i_max; iii += subBlockSize) {
-                    for (size_t jjj = jj; jjj < j_max; jjj += subBlockSize) {
-                        for (size_t kkk = kk; kkk < k_max; kkk += subBlockSize) {
+                // --- LOOP NÍVEL 2: Sub-Blocagem (Micro-Kernel Blocking) ---
+                for (size_t jjj = jj; jjj < j_max; jjj += subBlockSize) {
+                    for (size_t kkk = kk; kkk < k_max; kkk += subBlockSize) {
+                        for (size_t iii = ii; iii < i_max; iii += subBlockSize) {
 
+                            // Limites do Sub-Bloco
                             size_t i_sub_max = std::min(iii + subBlockSize, i_max);
                             size_t j_sub_max = std::min(jjj + subBlockSize, j_max);
                             size_t k_sub_max = std::min(kkk + subBlockSize, k_max);
 
-                            // Para cada elemento do sub-bloco (i,j) acumulamos sobre k
-                            for (size_t i = iii; i < i_sub_max; ++i) {
-                                for (size_t j = jjj; j < j_sub_max; ++j) {
-                                    // ponteiro para a linha i de A começando em kkk
-                                    const T* a_ptr = &A(i, kkk);
-                                    // ponteiro para a "linha" j de Bt (que é a coluna j de B)
-                                    const T* b_ptr = &Bt[j * p + kkk];
+                            // --- KERNEL DE CÁLCULO (Registradores / AVX) ---
+                            // Mantemos a estratégia Column-Major: J externo, I vetorizado
+                            for (size_t j = jjj; j < j_sub_max; ++j) {
+                                
+                                size_t i = iii;
 
-                                    // soma vetor e escalar para o resto
-                                    simd_t acc_vec(0);
-                                    size_t k = kkk;
+                                // 1. Parte Vetorizada (AVX)
+                                for (; i + V <= i_sub_max; i += V) {
+                                    
+                                    T* c_ptr = &C(i, j);
+                                    simd_t acc_vec(c_ptr, simd::element_aligned);
 
-                                    // loop vetorizado: processa V elementos por iteração
-                                    for (; k + V <= k_sub_max; k += V) {
-                                        // carrega V elementos contíguos de A e Bt (coluna de B)
-                                        simd_t va(a_ptr + (k - kkk), simd::element_aligned);
-                                        simd_t vb(b_ptr + (k - kkk), simd::element_aligned);
-                                        acc_vec += va * vb;
+                                    // Loop K interno (reduz load/store de C)
+                                    for (size_t k = kkk; k < k_sub_max; ++k) {
+                                        const T* a_ptr = &A(i, k);
+                                        simd_t vec_a(a_ptr, simd::element_aligned);
+                                        
+                                        T val_b = B(k, j); 
+                                        acc_vec += vec_a * val_b;
                                     }
+                                    acc_vec.copy_to(c_ptr, simd::element_aligned);
+                                }
 
-                                    // reduzir o vetor acumulador para um escalar
-                                    T sum = 0;
-                                    for (size_t t = 0; t < V; ++t) sum += acc_vec[t];
-
-                                    // resto não múltiplo de V
-                                    for (; k < k_sub_max; ++k) {
+                                // 2. Parte Escalar (Resto do sub-bloco)
+                                for (; i < i_sub_max; ++i) {
+                                    T sum = C(i, j); 
+                                    for (size_t k = kkk; k < k_sub_max; ++k) {
                                         sum += A(i, k) * B(k, j);
                                     }
-
-                                    C(i, j) += sum; // nota: acumulamos ao invés de sobrescrever
+                                    C(i, j) = sum;
                                 }
                             }
+                            // Fim do Kernel
                         }
                     }
                 }
+                // Fim do Loop Nível 2
             }
         }
     }
 
-    auto end = high_resolution_clock::now();
-    auto ms = duration_cast<milliseconds>(end - start).count();
-    std::cout << "Tempo total (SIMD): " << ms << " ms\n";
+    auto end = std::chrono::high_resolution_clock::now();
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+    std::cout << "Tempo total (SIMD Blocked Col-Major): " << ms << " ms\n";
+}
+
+// Verifica integridade matemática
+bool verify(Matrix<double>& A, Matrix<double>& B, Matrix<double>& C) {
+    size_t N = A.rows();
+    std::cout << "Verificando amostra...\n";
+    // Verifica 3 posições aleatórias
+    for(int k=0; k<3; k++) {
+        size_t r = rand() % N;
+        size_t c = rand() % N;
+        double acc = 0;
+        for(size_t i=0; i<N; i++) acc += A(r, i) * B(i, c);
+        
+        if (std::abs(acc - C(r, c)) > 1e-9) {
+            std::cout << "Erro em (" << r << "," << c << "): " 
+                      << "Calc=" << C(r, c) << " Real=" << acc << "\n";
+            return false;
+        }
+    }
+    return true;
 }
 
 int main() {
-
     set_real_time_priority();
 
-    const size_t N = 1 << 10; 
+    const size_t N = 4096; // Matriz 1024x1024
 
+    std::cout << "Alocando matrizes...\n";
+
+    // CORREÇÃO AQUI: Instancia direto, sem passar pelo Grid2
+    // Assumindo construtor Matrix(rows, cols, initial_value)
     Matrix<double> A(N, N, 0.0);
     Matrix<double> B(N, N, 0.0);
     Matrix<double> C(N, N, 0.0);
@@ -131,6 +147,7 @@ int main() {
     std::mt19937 rng(42);
     std::uniform_real_distribution<double> dist(-1.0, 1.0);
 
+    // Preenchimento
     for (size_t i = 0; i < N; ++i) {
         for (size_t j = 0; j < N; ++j) {
             A(i, j) = dist(rng);
@@ -138,10 +155,17 @@ int main() {
         }
     }
 
-    // Executa a multiplicação vetorizada
-    multiply_blocked_simd(A, B, C);
-    printf("%lf",C(0,0));
+    std::cout << "Iniciando multiplicacao...\n";
+    multiply_simd_col_major(A, B, C);
+
+    if(verify(A, B, C)) {
+        std::cout << "Resultado: SUCESSO\n";
+    } else {
+        std::cout << "Resultado: FALHA\n";
+    }
+    
+    // Evita otimização excessiva imprimindo um valor real
+    std::cout << "Check: " << C(0,0) << std::endl;
 
     return 0;
 }
-//g++ -O3 -mavx2 teste.cpp -o teste
